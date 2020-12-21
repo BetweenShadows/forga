@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<forga>
+	<filters>
+		<filter>
+			<from>C:/Users/Ivanosevic/Downloads</from>
+			<to>C:/Users/Ivanosevic/Desktop/documents</to>
+			<extensions>
+				<ext>.docx</ext>
+				<ext>.doc</ext>
+				<ext>.xls</ext>
+				<ext>.xlsx</ext>
+				<ext>.txt</ext>
+				<ext>.pdf</ext>
+			</extensions>
+		</filter>
+		<filter>
+			<from>C:/Users/Ivanosevic/Downloads</from>
+			<to>C:/Users/Ivanosevic/Desktop/music</to>
+			<extensions>
+				<ext>.mp3</ext>
+			</extensions>
+		</filter>
+		<filter>
+			<from>C:/Users/Ivanosevic/Downloads</from>
+			<to>C:/Users/Ivanosevic/Desktop/programs</to>
+			<extensions>
+				<ext>.exe</ext>
+				<ext>.msi</ext>
+			</extensions>
+		</filter>
+	</filters>
+</forga>

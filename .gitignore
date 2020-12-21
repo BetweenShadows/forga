@@ -1,0 +1,5 @@
+# cmake folder
+cmake-build-*/
+
+# .idea folder
+.idea/
