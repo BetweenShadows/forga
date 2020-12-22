@@ -6,15 +6,10 @@
 #include <fstream>
 #include <chrono>
 #include <sstream>
+#include "filter.hpp"
 #include "rapidxml/rapidxml.hpp"
 
 const std::string kConfigFilePath = "config.xml";
-
-struct Filter {
-    std::string path;
-    std::string target;
-    std::vector<std::string> exts;
-};
 
 std::vector<std::filesystem::path> GetElementsInPath(const std::filesystem::path& path) {
     std::vector<std::filesystem::path> files;
@@ -29,22 +24,20 @@ std::vector<std::filesystem::path> GetElementsInPath(const std::filesystem::path
     return files;
 }
 
-std::vector<std::filesystem::path> GetFilesByExt(const Filter& filter) {
+std::vector<std::filesystem::path> GetFilesByExt(Filter& filter) {
     std::vector<std::filesystem::path> files;
-    std::filesystem::path path(filter.path);
+    std::filesystem::path path(filter.GetWatchDir());
     auto elements = GetElementsInPath(path);
     for (const std::filesystem::path& entry : std::filesystem::directory_iterator(path)) {
-        for (const auto& exts : filter.exts) {
-            if (entry.extension() == exts) {
-                files.emplace_back(entry);
-            }
+        if(filter.HasExtension(entry.extension().u8string())) {
+            files.emplace_back(entry);
         }
     }
     return files;
 }
 
-void MoveFilesToTarget(const Filter& filter) {
-    std::filesystem::path to(filter.target);
+void MoveFilesToTarget(Filter& filter) {
+    std::filesystem::path to(filter.GetTargetDir());
     auto files = GetFilesByExt(filter);
     for (const auto& entry : files) {
         try {
@@ -59,7 +52,6 @@ void MoveFilesToTarget(const Filter& filter) {
 }
 
 void PerformFilter(Filter& filter) {
-    std::cout << "Running filter..." << std::endl;
     while(true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(5000));
         MoveFilesToTarget(filter);
@@ -91,15 +83,15 @@ std::vector<Filter*> LoadFilterList() {
     for (auto filter_node = filters_node->first_node("filter"); filter_node; filter_node = filter_node->next_sibling()) {
 
         // Creating filter and adding from and to values.
-        auto* filter = new Filter();
-        filter->path = filter_node->first_node("from")->value();
-        filter->target = filter_node->first_node("to")->value();
+        std::string from = filter_node->first_node("from")->value();
+        std::string to = filter_node->first_node("to")->value();
+        auto* filter = new Filter(from, to);
 
         // Iterate over extensions nodes
         // and get their values to the filter
         auto extensions_node = filter_node->first_node("extensions");
         for (auto ext_node = extensions_node->first_node("ext"); ext_node; ext_node = ext_node->next_sibling()) {
-            filter->exts.emplace_back(ext_node->value());
+            filter->AddExtension(ext_node->value());
         }
 
         // Add parsed node to the list
