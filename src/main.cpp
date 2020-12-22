@@ -4,6 +4,7 @@
 #include <thread>
 #include <string>
 #include <fstream>
+#include <chrono>
 #include <sstream>
 #include "rapidxml/rapidxml.hpp"
 
@@ -48,6 +49,7 @@ void MoveFilesToTarget(const Filter& filter) {
     for (const auto& entry : files) {
         try {
             std::filesystem::copy_file(entry, to / entry.filename());
+            std::filesystem::remove(entry);
         }
         catch (std::filesystem::filesystem_error& e) {
             std::cerr << "--ERROR: ";
@@ -56,8 +58,10 @@ void MoveFilesToTarget(const Filter& filter) {
     }
 }
 
-void PerformFilter(const Filter& filter) {
-    while (true) {
+void PerformFilter(Filter& filter) {
+    std::cout << "Running filter..." << std::endl;
+    while(true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
         MoveFilesToTarget(filter);
     }
 }
@@ -106,15 +110,25 @@ std::vector<Filter*> LoadFilterList() {
 }
 
 int main() {
+
     std::vector<Filter*> my_filters = LoadFilterList();
-    for (const auto& i : my_filters) {
-        std::cout << i->path << std::endl;
-        std::cout << i->target << std::endl;
-        // MoveFilesToTarget(*i);
+    std::vector<std::thread*> f_threads;
+
+    for(auto & my_filter : my_filters) {
+        auto* thread = new std::thread(&PerformFilter, *my_filter);
+        f_threads.emplace_back(thread);
     }
 
-    for (const auto& i : my_filters) {
+    for(auto& t : f_threads) {
+        t->join();
+    }
+
+    for (auto& i : my_filters) {
         delete i;
+    }
+
+    for(auto& t : f_threads) {
+        delete t;
     }
     return EXIT_SUCCESS;
 }
